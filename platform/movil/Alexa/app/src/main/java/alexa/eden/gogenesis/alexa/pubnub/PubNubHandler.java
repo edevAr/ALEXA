@@ -21,9 +21,17 @@ public final class  PubNubHandler {
     private final String KEY_PUB_NUB_SUSCRIBE = "demo";
     private final String KEY_PUB_NUB_PUBLISH = "demo";
 
+    private static PubNubNotifier pubnubNotifier;
+
     public void init() {
         configClient();
         addListener();
+    }
+    public static PubNubHandler getInstance(PubNubNotifier pubNubInstance) {
+        pubnubNotifier = pubNubInstance;
+        if(pubNubHandler == null)
+            pubNubHandler = new PubNubHandler();
+        return pubNubHandler;
     }
     public static PubNubHandler getInstance() {
         if(pubNubHandler == null)
@@ -54,7 +62,11 @@ public final class  PubNubHandler {
 
             @Override
             public void message(PubNub pubnub, PNMessageResult message) {
-
+                try{
+                pubnubNotifier.onMessage(message.getMessage().toString());
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
 
             @Override
@@ -81,9 +93,9 @@ public final class  PubNubHandler {
     private void destroy() {
         pubnub.destroy();
     }
-    public void publish(String channel) {
+    public void publish(String channel, String message) {
         pubnub.publish()
-                .message(Arrays.asList("hello", "there"))
+                .message(message)
                 .channel(channel)
                 .async(new PNCallback<PNPublishResult>() {
                     @Override
@@ -92,5 +104,9 @@ public final class  PubNubHandler {
                         // status.isError to see if error happened
                     }
                 });
+    }
+
+    public interface PubNubNotifier {
+        public void onMessage(String message);
     }
 }
